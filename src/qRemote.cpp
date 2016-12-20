@@ -17,7 +17,7 @@ using namespace std;
 static char cIn = 0;
 static int32_t number = 0;
 static bool Arm = false;
-static int32_t throttle = 0,p = 0,d = 0,i=0;
+static int32_t throttle = 0,p = 0,d = 0,i=0,pa=0;
 
 void checkCin()
 {
@@ -40,7 +40,7 @@ void updateArm(ros::Publisher* rosP)
 	ros::spinOnce();
 }
 
-void updateValues(uint32_t qid,ros::Publisher* rosP, int32_t* th, int32_t* pv, int32_t* iv, int32_t* dv)
+void updateValues(uint32_t qid,ros::Publisher* rosP, int32_t* th, int32_t* pv, int32_t* iv, int32_t* dv, int32_t* pav)
 {
 	quadMsgs::qParameters value;
 	value.qID = qid;
@@ -48,9 +48,10 @@ void updateValues(uint32_t qid,ros::Publisher* rosP, int32_t* th, int32_t* pv, i
 	value.qP = *pv;
 	value.qI = *iv;
 	value.qD = *dv;
+	value.qPA = *pav;
 	rosP->publish(value);
 	ros::spinOnce();
-	cout<<"T,P,I,D = "<<*(th)<<','<<*(pv)<<','<<*(iv)<<','<<*(dv)<<"\n";
+	cout<<"T,P,I,D,PA = "<<*(th)<<','<<*(pv)<<','<<*(iv)<<','<<*(dv)<<','<<*(pav)<<"\n";
 }
 
 void showStatus()
@@ -93,6 +94,7 @@ int main(int argc, char **argv)
 						p=0;
 						d=0;
 						i=0;
+						pa=0;
 					}
 					std::cout<<(Arm?"Armed\n":"UnArmed\n");
 					break;
@@ -101,6 +103,7 @@ int main(int argc, char **argv)
 					p=0;
 					d=0;
 					i=0;
+					pa=0;
 					break;
 				case 'w':
 					throttle++;
@@ -127,6 +130,11 @@ int main(int argc, char **argv)
 					else currentVariable='d';
 					number=0;
 					break;
+				case 'a':
+					if(number!=0) pa=number;
+					else currentVariable='a';
+					number=0;
+					break;
 				case ']':
 					switch(currentVariable)
 					{
@@ -138,6 +146,9 @@ int main(int argc, char **argv)
 							break;
 						case 'i':
 							i+=1;
+							break;
+						case 'a':
+							pa+=1;
 							break;
 					}
 					break;
@@ -153,13 +164,16 @@ int main(int argc, char **argv)
 						case 'i':
 							i-=1;
 							break;
+						case 'a':
+							pa-=1;
+							break;
 					}
 					break;
 				default:
 					std::cout<<"Not valid input\n";
 					break;
 			}
-			updateValues(QUAD_ID,&quadParam,&throttle,&p,&i,&d);
+			updateValues(QUAD_ID,&quadParam,&throttle,&p,&i,&d,&pa);
 			cIn = 0;
 		}
 		loop_rate.sleep();
